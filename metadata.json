@@ -1,0 +1,7 @@
+{
+  "name": "交通費精算システム",
+  "description": "インターン生向けの交通費申請・承認管理システム",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
