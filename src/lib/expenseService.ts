@@ -66,7 +66,17 @@ export const expenseService = {
     });
   },
 
-  // ステータスを更新
+  // 申請データを更新
+  async updateApplication(id: string, updates: Partial<ExpenseApplication>): Promise<void> {
+    const docRef = doc(db, 'applications', id);
+    const dataToUpdate: any = { ...updates };
+    if (updates.status) {
+      dataToUpdate.updatedAt = serverTimestamp();
+    }
+    await updateDoc(docRef, dataToUpdate);
+  },
+
+  // ステータスを更新（既存のメソッドを維持）
   async updateStatus(id: string, status: ApplicationStatus, returnReason?: string): Promise<void> {
     const docRef = doc(db, 'applications', id);
     await updateDoc(docRef, {

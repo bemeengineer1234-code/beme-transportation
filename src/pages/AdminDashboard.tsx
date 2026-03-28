@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
 import { Filter, Download, Search, CheckCircle, RotateCcw, X, Eye, User as UserIcon, Calendar, MapPin, FileText, AlertCircle, CreditCard, Lock } from 'lucide-react';
-import { ExpenseApplication } from '../types';
 import { useAuth } from '../hooks/useAuth';
-import { expenseService } from '../lib/expenseService';
+import { useApplications } from '../contexts/ApplicationContext';
+import { ExpenseApplication } from '../types';
 
 interface AdminDashboardProps {
   onNavigate: (view: 'dashboard' | 'settings') => void;
@@ -13,8 +13,7 @@ interface AdminDashboardProps {
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, activeView }) => {
   const { user } = useAuth();
-  const [applications, setApplications] = useState<ExpenseApplication[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { applications, updateStatus, loading } = useApplications();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,20 +27,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, acti
   const [passwordError, setPasswordError] = useState('');
   const [pendingAction, setPendingAction] = useState<{ type: 'cancel' | 'return', id: string } | null>(null);
 
-  const fetchApplications = async () => {
-    try {
-      setLoading(true);
-      const data = await expenseService.getApplications();
-      setApplications(data);
-    } catch (error) {
-      console.error('Failed to fetch applications:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchApplications();
+    // Data is handled by ApplicationContext
   }, []);
 
   const months = Array.from(new Set(applications.map(app => app.date.substring(0, 7)))).sort().reverse() as string[];
@@ -55,8 +42,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, acti
 
   const handleApprove = async (id: string) => {
     try {
-      await expenseService.updateStatus(id, 'approved');
-      await fetchApplications();
+      await updateStatus(id, 'approved');
       setSelectedApp(null);
     } catch (error) {
       console.error('Approval failed:', error);
@@ -65,8 +51,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, acti
 
   const handleCancelApproval = async (id: string) => {
     try {
-      await expenseService.updateStatus(id, 'pending');
-      await fetchApplications();
+      await updateStatus(id, 'pending');
       setSelectedApp(null);
     } catch (error) {
       console.error('Cancel approval failed:', error);
@@ -93,8 +78,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, acti
     if (!selectedApp) return;
 
     try {
-      await expenseService.updateStatus(selectedApp.id, 'returned', returnReason);
-      await fetchApplications();
+      await updateStatus(selectedApp.id, 'returned', returnReason);
       setShowReturnModal(false);
       setSelectedApp(null);
       setReturnReason('');
@@ -136,33 +120,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, acti
       <div className="space-y-8">
         {/* Stats Summary */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="card p-8 group">
-            <div className="label-micro mb-4">承認待ち</div>
+          <div className="card p-5 sm:p-8 group shadow-sm transition-shadow hover:shadow-md">
+            <div className="label-micro mb-2 sm:mb-4 text-amber-500">承認待ち</div>
             <div className="flex items-end justify-between">
-              <p className="text-4xl font-black text-amber-500 tracking-tighter group-hover:scale-110 transition-transform origin-left">{applications.filter(a => a.status === 'pending').length}</p>
-              <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-all">
-                <AlertCircle size={24} />
+              <p className="text-3xl sm:text-4xl font-black text-amber-500 tracking-tighter group-hover:scale-110 transition-transform origin-left">{applications.filter(a => a.status === 'pending').length}</p>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
             </div>
           </div>
-          <div className="card p-8 group">
-            <div className="label-micro mb-4">承認済み合計</div>
+          <div className="card p-5 sm:p-8 group shadow-sm transition-shadow hover:shadow-md">
+            <div className="label-micro mb-2 sm:mb-4">承認済み合計</div>
             <div className="flex items-end justify-between">
-              <p className="text-4xl font-black text-ink tracking-tighter group-hover:scale-110 transition-transform origin-left">
-                <span className="text-xl mr-1">¥</span>
+              <p className="text-3xl sm:text-4xl font-black text-ink tracking-tighter group-hover:scale-110 transition-transform origin-left">
+                <span className="text-[14px] sm:text-[18px] mr-1 opacity-50 font-black">¥</span>
                 {applications.filter(a => a.status === 'approved').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}
               </p>
-              <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-ink group-hover:text-white transition-all">
-                <CreditCard size={24} />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-ink group-hover:text-white transition-all">
+                <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
             </div>
           </div>
-          <div className="card p-8 group">
-            <div className="label-micro mb-4">アクティブユーザー</div>
+          <div className="card p-5 sm:p-8 group shadow-sm transition-shadow hover:shadow-md">
+            <div className="label-micro mb-2 sm:mb-4 text-brand">アクティブユーザー</div>
             <div className="flex items-end justify-between">
-              <p className="text-4xl font-black text-brand tracking-tighter group-hover:scale-110 transition-transform origin-left">{new Set(applications.map(a => a.userId)).size}</p>
-              <div className="w-12 h-12 bg-brand/5 rounded-2xl flex items-center justify-center text-brand group-hover:bg-brand group-hover:text-white transition-all">
-                <UserIcon size={24} />
+              <p className="text-3xl sm:text-4xl font-black text-brand tracking-tighter group-hover:scale-110 transition-transform origin-left">{new Set(applications.map(a => a.userId)).size}</p>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-brand/5 rounded-2xl flex items-center justify-center text-brand group-hover:bg-brand group-hover:text-white transition-all">
+                <UserIcon className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
             </div>
           </div>

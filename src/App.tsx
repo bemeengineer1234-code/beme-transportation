@@ -6,6 +6,7 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { SettingsPage } from './pages/SettingsPage';
 import { Loader2 } from 'lucide-react';
 import { AuthProvider } from './contexts/AuthContext';
+import { ApplicationProvider } from './contexts/ApplicationContext';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -38,7 +39,9 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <ApplicationProvider>
+        <AppContent />
+      </ApplicationProvider>
     </AuthProvider>
   );
 }

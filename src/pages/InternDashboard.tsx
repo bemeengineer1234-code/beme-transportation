@@ -3,6 +3,7 @@ import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
 import { Plus, Image as ImageIcon, X, Send, AlertCircle, ChevronRight, MapPin, Navigation, CreditCard, FileText, CheckCircle, RotateCcw, Calendar } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useApplications } from '../contexts/ApplicationContext';
 import { ExpenseApplication } from '../types';
 import { expenseService } from '../lib/expenseService';
 
@@ -13,15 +14,17 @@ interface InternDashboardProps {
 
 export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, activeView }) => {
   const { user } = useAuth();
+  const { applications: allApplications, addApplication, updateApplication, loading: contextLoading } = useApplications();
   const [showForm, setShowForm] = useState(false);
   const [selectedApp, setSelectedApp] = useState<ExpenseApplication | null>(null);
   const [editingAppId, setEditingAppId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
-  const [applications, setApplications] = useState<ExpenseApplication[]>([]);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().substring(0, 7));
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  
+  const applications = allApplications.filter(a => a.userId === user?.id);
+  const loading = contextLoading;
   
   // Form state
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -34,22 +37,8 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
   const [previews, setPreviews] = useState<string[]>([]);
   const [masterLocations, setMasterLocations] = useState<string[]>([]);
 
-  // Fetch applications
-  const fetchApplications = async () => {
-    if (!user?.id) return;
-    try {
-      setLoading(true);
-      const data = await expenseService.getApplications(user.id);
-      setApplications(data);
-    } catch (error) {
-      console.error('Failed to fetch applications:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchApplications();
+    // Initial data is handled by context, but we keep the master data loading
   }, [user?.id]);
 
   // Load master data for suggestions
@@ -158,10 +147,19 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
       }
 
       if (editingAppId) {
-        await expenseService.updateStatus(editingAppId, 'pending');
-        // 他のフィールドも更新する場合は updateApplication メソッドを expenseService に追加
+        await updateApplication(editingAppId, {
+          date,
+          location,
+          departureStation,
+          arrivalStation,
+          route: `${departureStation} 〜 ${arrivalStation}`,
+          amount: Number(amount),
+          remarks,
+          imageUrls,
+          status: 'pending' // Re-submit as pending if edited
+        });
       } else {
-        await expenseService.createApplication({
+        await addApplication({
           userId: user.id,
           userName: user.name,
           date,
@@ -176,7 +174,6 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
         });
       }
 
-      await fetchApplications(); // 再取得
       setShowForm(false);
       resetForm();
     } catch (error) {
@@ -203,42 +200,42 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
     <Layout title="マイ申請" onNavigate={onNavigate} activeView={activeView}>
       <div className="space-y-8">
         {/* Summary Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="card p-8 group">
-            <div className="flex items-center justify-between mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+          <div className="card p-5 sm:p-8 group shadow-sm transition-shadow hover:shadow-md">
+            <div className="flex items-center justify-between mb-2 sm:mb-4">
               <div className="label-micro text-emerald-500">承認済み合計</div>
               <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-all">
-                <CheckCircle size={20} />
+                <CheckCircle className="w-5 h-5" />
               </div>
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-black text-emerald-600 tracking-tighter">¥{approvedTotal.toLocaleString()}</span>
+              <span className="text-2xl sm:text-3xl font-black text-emerald-600 tracking-tighter">¥{approvedTotal.toLocaleString()}</span>
               <span className="text-xs font-bold text-slate-400">/ {approvedCount}件</span>
             </div>
           </div>
 
-          <div className="card p-8 group">
-            <div className="flex items-center justify-between mb-4">
+          <div className="card p-5 sm:p-8 group shadow-sm transition-shadow hover:shadow-md">
+            <div className="flex items-center justify-between mb-2 sm:mb-4">
               <div className="label-micro text-rose-500">差し戻し合計</div>
               <div className="w-10 h-10 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center group-hover:bg-rose-600 group-hover:text-white transition-all">
-                <RotateCcw size={20} />
+                <RotateCcw className="w-5 h-5" />
               </div>
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-black text-rose-600 tracking-tighter">¥{returnedTotal.toLocaleString()}</span>
+              <span className="text-2xl sm:text-3xl font-black text-rose-600 tracking-tighter">¥{returnedTotal.toLocaleString()}</span>
               <span className="text-xs font-bold text-slate-400">/ {returnedCount}件</span>
             </div>
           </div>
 
-          <div className="card p-8 group">
-            <div className="flex items-center justify-between mb-4">
+          <div className="card p-5 sm:p-8 group shadow-sm transition-shadow hover:shadow-md">
+            <div className="flex items-center justify-between mb-2 sm:mb-4">
               <div className="label-micro text-amber-500">申請中合計</div>
-              <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-all">
-                <AlertCircle size={20} />
+              <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center group-hover:bg-amber-500 group-hover:text-white transition-all">
+                <AlertCircle className="w-5 h-5" />
               </div>
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-black text-amber-600 tracking-tighter">¥{pendingTotal.toLocaleString()}</span>
+              <span className="text-2xl sm:text-3xl font-black text-amber-600 tracking-tighter">¥{pendingTotal.toLocaleString()}</span>
               <span className="text-xs font-bold text-slate-400">/ {pendingCount}件</span>
             </div>
           </div>
