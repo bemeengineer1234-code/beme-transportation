@@ -3,7 +3,7 @@ import { Layout } from '../components/Layout';
 import { Save, User as UserIcon, Shield, Bell, Globe, Loader2, CheckCircle2, ArrowLeft, Plus, Trash2, Edit2 } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { User } from '../types';
+import { User, UserRole } from '../types';
 
 interface SettingsPageProps {
   onNavigate: (view: 'dashboard' | 'settings') => void;
@@ -138,7 +138,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, activeVi
       if (editingUser) {
         await updateDoc(doc(db, 'users', editingUser.id), {
           name: userFormData.name,
-          role: userFormData.role
+          email: userFormData.email,
+          role: userFormData.role as UserRole
         });
       } else {
         // 注: クライアント側からの新規ユーザー(Auth)作成は制限があるため、
@@ -569,11 +570,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, activeVi
                 <label className="label-micro ml-1">権限</label>
                 <select 
                   value={userFormData.role}
-                  onChange={(e) => setUserFormData({ ...userFormData, role: e.target.value })}
+                  onChange={(e) => setUserFormData({ ...userFormData, role: e.target.value as UserRole })}
                   className="w-full px-6 py-4 bg-slate-50 border border-line rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none font-black text-ink transition-all appearance-none cursor-pointer"
                 >
-                  <option value="インターン">インターン</option>
-                  <option value="管理者">管理者</option>
+                  <option value="intern">インターン</option>
+                  <option value="admin">管理者</option>
                 </select>
               </div>
             </div>
