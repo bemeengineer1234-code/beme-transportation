@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { Save, User as UserIcon, Shield, Bell, Globe, Loader2, CheckCircle2, ArrowLeft, Plus, Trash2, Edit2 } from 'lucide-react';
-import { db } from '../lib/firebase';
+import { initializeApp, deleteApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { db, firebaseConfig } from '../lib/firebase';
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { User, UserRole } from '../types';
 
@@ -142,17 +144,33 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, activeVi
           role: userFormData.role as UserRole
         });
       } else {
-        // 注: クライアント側からの新規ユーザー(Auth)作成は制限があるため、
-        // ここでは Firestore のプロフィール作成のみ、または別途案内が必要
-        // 今回は簡易的に Firestore への保存を試みる
-        const newId = `user_${Date.now()}`;
-        await setDoc(doc(db, 'users', newId), {
-          id: newId,
+        if (!userFormData.password) {
+          alert('新規ユーザー作成にはパスワードが必要です。');
+          return;
+        }
+
+        // 1. Firebase Auth にアカウント作成 (現在のセッションを維持するため別インスタンスを使用)
+        const secondaryApp = initializeApp(firebaseConfig, `secondary-${Date.now()}`);
+        const secondaryAuth = getAuth(secondaryApp);
+        
+        const userCredential = await createUserWithEmailAndPassword(
+          secondaryAuth, 
+          userFormData.email, 
+          userFormData.password
+        );
+        const authId = userCredential.user.uid;
+
+        // 2. Firestore にプロフィール作成
+        await setDoc(doc(db, 'users', authId), {
+          id: authId,
           name: userFormData.name,
           email: userFormData.email,
           role: userFormData.role,
           createdAt: new Date().toISOString()
         });
+
+        // インスタンス破棄
+        await deleteApp(secondaryApp);
       }
       
       const usersSnapshot = await getDocs(collection(db, 'users'));
