@@ -102,16 +102,24 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
   };
 
   const removeImage = (index: number) => {
-    const newImages = [...images];
-    newImages.splice(index, 1);
-    setImages(newImages);
-
+    const previewToRemove = previews[index];
     const newPreviews = [...previews];
-    if (!newPreviews[index].startsWith('http')) {
-      URL.revokeObjectURL(newPreviews[index]);
-    }
     newPreviews.splice(index, 1);
     setPreviews(newPreviews);
+
+    // blob: で始まるのが新しく追加された画像
+    if (previewToRemove.startsWith('blob:')) {
+      // images 配列から対応するファイルを削除
+      // previews 内の blob: 画像の順番と images 配列の順番は一致しているはず
+      const blobPreviewsBefore = previews.slice(0, index).filter(p => p.startsWith('blob:'));
+      const imageIndex = blobPreviewsBefore.length;
+      
+      const newImages = [...images];
+      newImages.splice(imageIndex, 1);
+      setImages(newImages);
+      
+      URL.revokeObjectURL(previewToRemove);
+    }
   };
 
   const handleEdit = (app: ExpenseApplication) => {
@@ -132,53 +140,54 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user) {
+      console.error('Submit blocked: No user found');
+      return;
+    }
 
     try {
       setSubmitting(true);
+      console.log('Starting submission...', { date, location, amount, imagesCount: images.length });
       
       // 画像のアップロード
-      let imageUrls = previews.filter(p => p.startsWith('http')); // すでにアップロード済みのもの
+      let imageUrls = previews.filter(p => p.startsWith('http'));
       const newImages = images;
       
       if (newImages.length > 0) {
+        console.log('Uploading new images...', newImages.length);
         const uploadedUrls = await expenseService.uploadImages(user.id, newImages);
+        console.log('Upload success:', uploadedUrls);
         imageUrls = [...imageUrls, ...uploadedUrls];
       }
 
+      const applicationData = {
+        userId: user.id,
+        userName: user.name,
+        date,
+        location,
+        departureStation,
+        arrivalStation,
+        route: `${departureStation} 〜 ${arrivalStation}`,
+        amount: Number(amount),
+        remarks,
+        imageUrls,
+        status: 'pending' as const
+      };
+
       if (editingAppId) {
-        await updateApplication(editingAppId, {
-          date,
-          location,
-          departureStation,
-          arrivalStation,
-          route: `${departureStation} 〜 ${arrivalStation}`,
-          amount: Number(amount),
-          remarks,
-          imageUrls,
-          status: 'pending' // Re-submit as pending if edited
-        });
+        console.log('Updating existing application:', editingAppId);
+        await updateApplication(editingAppId, applicationData);
       } else {
-        await addApplication({
-          userId: user.id,
-          userName: user.name,
-          date,
-          location,
-          departureStation,
-          arrivalStation,
-          route: `${departureStation} 〜 ${arrivalStation}`,
-          amount: Number(amount),
-          remarks,
-          imageUrls,
-          status: 'pending'
-        });
+        console.log('Creating new application...');
+        await addApplication(applicationData);
       }
 
+      console.log('Submission complete success!');
       setShowForm(false);
       resetForm();
-    } catch (error) {
-      console.error('Submission failed:', error);
-      alert('送信に失敗しました。');
+    } catch (error: any) {
+      console.error('Submission failed with error:', error);
+      alert(`送信に失敗しました。\nエラー: ${error.message || '不明なエラー'}\nコンソールログを確認してください。`);
     } finally {
       setSubmitting(false);
     }
@@ -586,10 +595,15 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
                   </button>
                   <button
                     type="submit"
-                    className="btn-primary flex-1 py-4 flex items-center justify-center gap-2"
+                    disabled={submitting}
+                    className={`btn-primary flex-1 py-4 flex items-center justify-center gap-2 ${submitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    <Send size={20} />
-                    <span>{editingAppId ? '更新する' : '申請する'}</span>
+                    {submitting ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <Send size={20} />
+                    )}
+                    <span>{submitting ? '送信中...' : (editingAppId ? '更新する' : '申請する')}</span>
                   </button>
                 </div>
               </form>
