@@ -37,9 +37,6 @@ export const LoginPage: React.FC = () => {
           <h1 className="text-3xl font-black text-ink tracking-tight mb-3">
             インターン<span className="text-brand-vibrant">交通費申請</span>
           </h1>
-          <p className="text-slate-400 font-bold tracking-widest uppercase text-[10px]">
-            プロフェッショナルな勤怠管理システム
-          </p>
         </div>
 
         <div className="card p-10 shadow-2xl shadow-slate-200/50 border-t-4 border-t-brand-vibrant">
