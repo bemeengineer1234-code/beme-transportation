@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
-import { Save, User, Shield, Bell, Globe, Loader2, CheckCircle2, ArrowLeft, Plus, Trash2, Edit2 } from 'lucide-react';
+import { Save, User as UserIcon, Shield, Bell, Globe, Loader2, CheckCircle2, ArrowLeft, Plus, Trash2, Edit2 } from 'lucide-react';
+import { db } from '../lib/firebase';
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { User } from '../types';
 
 interface SettingsPageProps {
   onNavigate: (view: 'dashboard' | 'settings') => void;
@@ -21,18 +24,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, activeVi
   const [notifyOnReturn, setNotifyOnReturn] = useState(true);
 
   // User Management state
-  const [users, setUsers] = useState([
-    { id: '1', name: '山田 太郎', email: 'yamada@example.com', role: 'インターン', password: 'password123' },
-    { id: '2', name: '佐藤 花子', email: 'sato@example.com', role: 'インターン', password: 'password123' },
-    { id: '3', name: '管理者 A', email: 'admin@example.com', role: '管理者', password: 'password123' },
-    { id: '4', name: '鈴木 一郎', email: 'suzuki@example.com', role: 'インターン', password: 'password123' },
-    { id: '5', name: '田中 健二', email: 'tanaka@example.com', role: 'インターン', password: 'password123' },
-    { id: '6', name: '伊藤 結衣', email: 'ito@example.com', role: 'インターン', password: 'password123' },
-    { id: '7', name: '渡辺 翔太', email: 'watanabe@example.com', role: 'インターン', password: 'password123' },
-  ]);
+  const [users, setUsers] = useState<User[]>([]);
 
   // Master Data state
-  const [locations, setLocations] = useState(['東京オフィス', '大阪支社', '名古屋営業所', 'リモート']);
+  const [locations, setLocations] = useState<string[]>([]);
 
   // Notification Template state
   const [emailSubject, setEmailSubject] = useState('【交通費精算】申請が承認されました');
@@ -41,7 +36,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, activeVi
   // Modal states
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
-  const [userFormData, setUserFormData] = useState({ name: '', email: '', role: 'インターン', password: '' });
+  const [userFormData, setUserFormData] = useState({ name: '', email: '', role: 'intern', password: '' });
 
   const [isMasterModalOpen, setIsMasterModalOpen] = useState(false);
   const [masterType, setMasterType] = useState<'location' | 'project'>('location');
@@ -51,86 +46,122 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, activeVi
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'user' | 'location' | 'project', id?: string, index?: number } | null>(null);
 
-  // Load settings from localStorage
+  // Load settings from Firestore
   useEffect(() => {
-    const savedSettings = localStorage.getItem('app_settings');
-    if (savedSettings) {
-      const parsed = JSON.parse(savedSettings);
-      setSystemName(parsed.systemName || '交通費精算ポータル');
-      setAdminEmail(parsed.adminEmail || 'admin@example.com');
-      setNotifyOnNew(parsed.notifyOnNew !== undefined ? parsed.notifyOnNew : true);
-      setNotifyOnReturn(parsed.notifyOnReturn !== undefined ? parsed.notifyOnReturn : true);
-    }
+    const fetchSettings = async () => {
+      try {
+        const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+        if (settingsDoc.exists()) {
+          const data = settingsDoc.data();
+          setSystemName(data.systemName || '交通費精算ポータル');
+          setAdminEmail(data.adminEmail || 'admin@example.com');
+          setNotifyOnNew(data.notifyOnNew !== undefined ? data.notifyOnNew : true);
+          setNotifyOnReturn(data.notifyOnReturn !== undefined ? data.notifyOnReturn : true);
+        }
 
-    const savedUsers = localStorage.getItem('app_users');
-    if (savedUsers) setUsers(JSON.parse(savedUsers));
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        setUsers(usersSnapshot.docs.map(doc => doc.data() as User));
 
-    const savedMaster = localStorage.getItem('app_master');
-    if (savedMaster) {
-      const parsed = JSON.parse(savedMaster);
-      setLocations(parsed.locations || []);
-    }
+        const masterDoc = await getDoc(doc(db, 'settings', 'master'));
+        if (masterDoc.exists()) {
+          setLocations(masterDoc.data().locations || []);
+        }
 
-    const savedTemplates = localStorage.getItem('app_templates');
-    if (savedTemplates) {
-      const parsed = JSON.parse(savedTemplates);
-      setEmailSubject(parsed.emailSubject || '');
-      setEmailBody(parsed.emailBody || '');
-    }
+        const templateDoc = await getDoc(doc(db, 'settings', 'templates'));
+        if (templateDoc.exists()) {
+          setEmailSubject(templateDoc.data().emailSubject || '');
+          setEmailBody(templateDoc.data().emailBody || '');
+        }
+      } catch (error) {
+        console.error('Failed to fetch settings from Firestore:', error);
+      }
+    };
+
+    fetchSettings();
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    const settings = { systemName, adminEmail, notifyOnNew, notifyOnReturn };
-    
-    setTimeout(() => {
-      localStorage.setItem('app_settings', JSON.stringify(settings));
-      setIsSaving(false);
+    try {
+      await setDoc(doc(db, 'settings', 'general'), {
+        systemName,
+        adminEmail,
+        notifyOnNew,
+        notifyOnReturn
+      }, { merge: true });
+      
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-    }, 1000);
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleSaveTemplates = () => {
+  const handleSaveTemplates = async () => {
     setIsSaving(true);
-    const templates = { emailSubject, emailBody };
-    setTimeout(() => {
-      localStorage.setItem('app_templates', JSON.stringify(templates));
-      setIsSaving(false);
+    try {
+      await setDoc(doc(db, 'settings', 'templates'), {
+        emailSubject,
+        emailBody
+      }, { merge: true });
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-    }, 800);
+    } catch (error) {
+      console.error('Failed to save templates:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // User Handlers
   const handleAddUser = () => {
     setEditingUser(null);
-    setUserFormData({ name: '', email: '', role: 'インターン', password: '' });
+    setUserFormData({ name: '', email: '', role: 'intern', password: '' });
     setIsUserModalOpen(true);
   };
 
   const handleEditUser = (id: string) => {
-    const user = users.find(u => u.id === id);
-    if (!user) return;
-    setEditingUser(user);
-    setUserFormData({ name: user.name, email: user.email, role: user.role, password: user.password || '' });
+    const userMatched = users.find(u => u.id === id);
+    if (!userMatched) return;
+    setEditingUser(userMatched);
+    setUserFormData({ name: userMatched.name, email: userMatched.email, role: userMatched.role, password: '' });
     setIsUserModalOpen(true);
   };
 
-  const handleSaveUser = () => {
+  const handleSaveUser = async () => {
     if (!userFormData.name || !userFormData.email) return;
     
-    let updated;
-    if (editingUser) {
-      updated = users.map(u => u.id === editingUser.id ? { ...u, ...userFormData } : u);
-    } else {
-      const newUser = { id: Date.now().toString(), ...userFormData };
-      updated = [...users, newUser];
+    try {
+      setIsSaving(true);
+      if (editingUser) {
+        await updateDoc(doc(db, 'users', editingUser.id), {
+          name: userFormData.name,
+          role: userFormData.role
+        });
+      } else {
+        // 注: クライアント側からの新規ユーザー(Auth)作成は制限があるため、
+        // ここでは Firestore のプロフィール作成のみ、または別途案内が必要
+        // 今回は簡易的に Firestore への保存を試みる
+        const newId = `user_${Date.now()}`;
+        await setDoc(doc(db, 'users', newId), {
+          id: newId,
+          name: userFormData.name,
+          email: userFormData.email,
+          role: userFormData.role,
+          createdAt: new Date().toISOString()
+        });
+      }
+      
+      const usersSnapshot = await getDocs(collection(db, 'users'));
+      setUsers(usersSnapshot.docs.map(doc => doc.data() as User));
+      setIsUserModalOpen(false);
+    } catch (error) {
+      console.error('Failed to save user:', error);
+    } finally {
+      setIsSaving(false);
     }
-    
-    setUsers(updated);
-    localStorage.setItem('app_users', JSON.stringify(updated));
-    setIsUserModalOpen(false);
   };
 
   const handleDeleteUser = (id: string) => {
@@ -146,43 +177,38 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, activeVi
     setIsMasterModalOpen(true);
   };
 
-  const handleAddProjectCode = () => {
-    setMasterType('project');
-    setEditingMasterIndex(null);
-    setMasterFormData('');
-    setIsMasterModalOpen(true);
-  };
-
-  const handleSaveMaster = () => {
+  const handleSaveMaster = async () => {
     if (!masterFormData) return;
 
-    if (masterType === 'location') {
+    try {
       const updated = [...locations, masterFormData];
+      await setDoc(doc(db, 'settings', 'master'), { locations: updated }, { merge: true });
       setLocations(updated);
-      localStorage.setItem('app_master', JSON.stringify({ locations: updated }));
+      setIsMasterModalOpen(false);
+    } catch (error) {
+      console.error('Failed to save master data:', error);
     }
-    setIsMasterModalOpen(false);
   };
 
-  const handleDeleteLocation = (index: number) => {
-    setDeleteTarget({ type: 'location', index });
-    setIsDeleteConfirmOpen(true);
-  };
-
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
 
-    if (deleteTarget.type === 'user') {
-      const updated = users.filter(u => u.id !== deleteTarget.id);
-      setUsers(updated);
-      localStorage.setItem('app_users', JSON.stringify(updated));
-    } else if (deleteTarget.type === 'location') {
-      const updated = locations.filter((_, i) => i !== deleteTarget.index);
-      setLocations(updated);
-      localStorage.setItem('app_master', JSON.stringify({ locations: updated }));
+    try {
+      if (deleteTarget.type === 'user') {
+        const idToDelete = deleteTarget.id!;
+        await deleteDoc(doc(db, 'users', idToDelete));
+        setUsers(users.filter(u => u.id !== idToDelete));
+      } else if (deleteTarget.type === 'location') {
+        const updated = locations.filter((_, i) => i !== deleteTarget.index);
+        await setDoc(doc(db, 'settings', 'master'), { locations: updated }, { merge: true });
+        setLocations(updated);
+      }
+    } catch (error) {
+      console.error('Failed to delete item:', error);
+    } finally {
+      setIsDeleteConfirmOpen(false);
+      setDeleteTarget(null);
     }
-    setIsDeleteConfirmOpen(false);
-    setDeleteTarget(null);
   };
 
   const renderMainSettings = () => (
@@ -268,7 +294,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, activeVi
           className="card p-10 hover:shadow-2xl hover:shadow-brand/5 transition-all cursor-pointer group text-left w-full border-line hover:border-brand/20"
         >
           <div className="w-16 h-16 bg-brand/5 text-brand rounded-[24px] flex items-center justify-center mb-8 group-hover:bg-brand group-hover:text-white transition-all group-hover:scale-110 group-hover:rotate-3">
-            <User size={32} />
+            <UserIcon size={32} />
           </div>
           <div className="label-micro mb-2">管理</div>
           <h4 className="text-xl font-black text-ink">ユーザー管理</h4>
@@ -343,8 +369,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, activeVi
                   <span className="data-value text-slate-500">{u.email}</span>
                 </td>
                 <td className="px-10 py-6">
-                  <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${u.role === '管理者' ? 'bg-brand/5 text-brand border-brand/10' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
-                    {u.role}
+                  <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${u.role === 'admin' ? 'bg-brand/5 text-brand border-brand/10' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                    {u.role === 'admin' ? '管理者' : 'インターン'}
                   </span>
                 </td>
                 <td className="px-10 py-6 text-right space-x-2">

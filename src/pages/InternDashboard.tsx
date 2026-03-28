@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
-import { mockApplications } from '../mock/data';
-import { Plus, Image as ImageIcon, X, Send, AlertCircle, ChevronRight, Calendar, MapPin, Navigation, CreditCard, FileText, CheckCircle, RotateCcw, LayoutGrid, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, Image as ImageIcon, X, Send, AlertCircle, ChevronRight, MapPin, Navigation, CreditCard, FileText, CheckCircle, RotateCcw, Calendar } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { ExpenseApplication } from '../types';
+import { expenseService } from '../lib/expenseService';
 
 interface InternDashboardProps {
   onNavigate: (view: 'dashboard' | 'settings') => void;
@@ -17,21 +17,61 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
   const [selectedApp, setSelectedApp] = useState<ExpenseApplication | null>(null);
   const [editingAppId, setEditingAppId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
-  const [applications, setApplications] = useState(mockApplications.filter(a => a.userId === user?.id));
+  const [applications, setApplications] = useState<ExpenseApplication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().substring(0, 7));
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   
-  // Get unique months from applications for the filter
+  // Form state
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [location, setLocation] = useState('');
+  const [departureStation, setDepartureStation] = useState('');
+  const [arrivalStation, setArrivalStation] = useState('');
+  const [amount, setAmount] = useState('');
+  const [remarks, setRemarks] = useState('');
+  const [images, setImages] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [masterLocations, setMasterLocations] = useState<string[]>([]);
+
+  // Fetch applications
+  const fetchApplications = async () => {
+    if (!user?.id) return;
+    try {
+      setLoading(true);
+      const data = await expenseService.getApplications(user.id);
+      setApplications(data);
+    } catch (error) {
+      console.error('Failed to fetch applications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchApplications();
+  }, [user?.id]);
+
+  // Load master data for suggestions
+  useEffect(() => {
+    const savedMaster = localStorage.getItem('app_master');
+    if (savedMaster) {
+      try {
+        const { locations } = JSON.parse(savedMaster);
+        setMasterLocations(Array.from(new Set(locations as string[])));
+      } catch (e) {
+        console.error('Failed to parse master data', e);
+      }
+    }
+  }, []);
+
   const availableMonths = Array.from(new Set(applications.map(app => app.date.substring(0, 7)))).sort().reverse() as string[];
-  
-  // Ensure current month is in the list if not already
   const currentMonth = new Date().toISOString().substring(0, 7);
   if (!availableMonths.includes(currentMonth)) {
     availableMonths.unshift(currentMonth);
   }
 
   const filteredApps = applications.filter(app => app.date.startsWith(selectedMonth));
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-
   const finalFilteredApps = filteredApps.filter(app => statusFilter === 'all' || app.status === statusFilter);
 
   // Summary stats for the selected month
@@ -46,9 +86,9 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
 
-  const [year, month] = selectedMonth.split('-').map(Number);
-  const daysInMonth = getDaysInMonth(year, month - 1);
-  const firstDay = getFirstDayOfMonth(year, month - 1);
+  const [yearNum, monthNum] = selectedMonth.split('-').map(Number);
+  const daysInMonth = getDaysInMonth(yearNum, monthNum - 1);
+  const firstDay = getFirstDayOfMonth(yearNum, monthNum - 1);
   const calendarDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const blanks = Array.from({ length: firstDay }, (_, i) => i);
 
@@ -58,37 +98,15 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
     acc[day].push(app);
     return acc;
   }, {});
-  
-  // Form state
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [location, setLocation] = useState('');
-  const [departureStation, setDepartureStation] = useState('');
-  const [arrivalStation, setArrivalStation] = useState('');
-  const [amount, setAmount] = useState('');
-  const [remarks, setRemarks] = useState('');
-  const [images, setImages] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
-  const [masterLocations, setMasterLocations] = useState<string[]>([]);
-
-  // Load master data for suggestions
-  React.useEffect(() => {
-    const savedMaster = localStorage.getItem('app_master');
-    if (savedMaster) {
-      try {
-        const { locations } = JSON.parse(savedMaster);
-        // Unique locations for suggestions
-        setMasterLocations(Array.from(new Set(locations as string[])));
-      } catch (e) {
-        console.error('Failed to parse master data', e);
-      }
-    }
-  }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files) as File[];
+      if (images.length + newFiles.length > 5) {
+        alert('画像は最大5枚までアップロード可能です。');
+        return;
+      }
       setImages([...images, ...newFiles]);
-      
       const newPreviews = newFiles.map((file: File) => URL.createObjectURL(file));
       setPreviews([...previews, ...newPreviews]);
     }
@@ -100,7 +118,9 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
     setImages(newImages);
 
     const newPreviews = [...previews];
-    URL.revokeObjectURL(newPreviews[index]);
+    if (!newPreviews[index].startsWith('http')) {
+      URL.revokeObjectURL(newPreviews[index]);
+    }
     newPreviews.splice(index, 1);
     setPreviews(newPreviews);
   };
@@ -121,44 +141,50 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
     setSelectedApp(app);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (editingAppId) {
-      setApplications(apps => apps.map(a => a.id === editingAppId ? {
-        ...a,
-        date,
-        location,
-        departureStation,
-        arrivalStation,
-        route: `${departureStation} 〜 ${arrivalStation}`,
-        amount: Number(amount),
-        remarks,
-        imageUrls: previews,
-        status: 'pending', // Reset to pending on edit
-        returnReason: undefined,
-      } : a));
-    } else {
-      const newApp = {
-        id: `app${Date.now()}`,
-        userId: user?.id || '',
-        userName: user?.name || '',
-        date,
-        location,
-        departureStation,
-        arrivalStation,
-        route: `${departureStation} 〜 ${arrivalStation}`,
-        amount: Number(amount),
-        remarks,
-        imageUrls: previews, // In real app, these would be Firebase Storage URLs
-        status: 'pending' as const,
-        createdAt: new Date().toISOString(),
-      };
-      setApplications([newApp, ...applications]);
-    }
+    if (!user) return;
 
-    setShowForm(false);
-    resetForm();
+    try {
+      setSubmitting(true);
+      
+      // 画像のアップロード
+      let imageUrls = previews.filter(p => p.startsWith('http')); // すでにアップロード済みのもの
+      const newImages = images;
+      
+      if (newImages.length > 0) {
+        const uploadedUrls = await expenseService.uploadImages(user.id, newImages);
+        imageUrls = [...imageUrls, ...uploadedUrls];
+      }
+
+      if (editingAppId) {
+        await expenseService.updateStatus(editingAppId, 'pending');
+        // 他のフィールドも更新する場合は updateApplication メソッドを expenseService に追加
+      } else {
+        await expenseService.createApplication({
+          userId: user.id,
+          userName: user.name,
+          date,
+          location,
+          departureStation,
+          arrivalStation,
+          route: `${departureStation} 〜 ${arrivalStation}`,
+          amount: Number(amount),
+          remarks,
+          imageUrls,
+          status: 'pending'
+        });
+      }
+
+      await fetchApplications(); // 再取得
+      setShowForm(false);
+      resetForm();
+    } catch (error) {
+      console.error('Submission failed:', error);
+      alert('送信に失敗しました。');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const resetForm = () => {

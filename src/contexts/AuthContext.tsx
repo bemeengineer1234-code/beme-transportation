@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, AuthState } from '../types';
-import { mockUsers } from '../mock/data';
+import { auth, db } from '../lib/firebase';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
@@ -16,61 +18,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('auth_user');
-    if (savedUser) {
-      setAuthState({ user: JSON.parse(savedUser), loading: false });
-    } else {
-      setAuthState({ user: null, loading: false });
-    }
+    // Firebase Auth の状態を監視
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          // Firestore からユーザー情報を取得
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data() as User;
+            setAuthState({ user: userData, loading: false });
+          } else {
+            // Firestore に情報がない場合 (初期管理者の直後など)
+            setAuthState({ 
+              user: { 
+                id: firebaseUser.uid, 
+                email: firebaseUser.email || '', 
+                name: 'Unknown User', 
+                role: 'intern' 
+              }, 
+              loading: false 
+            });
+          }
+        } catch (error) {
+          console.error('Failed to fetch user data:', error);
+          setAuthState({ user: null, loading: false });
+        }
+      } else {
+        setAuthState({ user: null, loading: false });
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // 1. localStorage からユーザーリストを取得
-        const savedUsers = localStorage.getItem('app_users');
-        let users = mockUsers;
-        if (savedUsers) {
-          try {
-            users = JSON.parse(savedUsers);
-          } catch (e) {
-            console.error('Failed to parse app_users', e);
-          }
-        }
-
-        // 2. ユーザーを検索
-        const user = users.find(u => u.email === email);
-        
-        if (!user) {
-          reject(new Error('メールアドレスまたはパスワードが正しくありません。'));
-          return;
-        }
-
-        // 3. パスワードチェック (デモ用なので簡易的)
-        // SettingsPage で設定されたパスワード、またはデフォルトの 'password123'
-        const validPassword = (user as any).password || 'password123';
-        
-        if (password !== validPassword) {
-          reject(new Error('メールアドレスまたはパスワードが正しくありません。'));
-          return;
-        }
-
-        // 4. ロールを内部形式に変換 (SettingsPage では日本語で保存されている可能性があるため)
-        const normalizedUser: User = {
-          ...user,
-          role: user.role === '管理者' ? 'admin' : (user.role === 'admin' ? 'admin' : 'intern')
-        };
-
-        setAuthState({ user: normalizedUser, loading: false });
-        localStorage.setItem('auth_user', JSON.stringify(normalizedUser));
-        resolve();
-      }, 800);
-    });
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // login 自体は成功すればOK。authState の更新は onAuthStateChanged が担当。
+    } catch (error: any) {
+      console.error('Login error:', error);
+      let message = 'メールアドレスまたはパスワードが正しくありません。';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        message = '形式が正しくないか、認証情報が間違っています。';
+      }
+      throw new Error(message);
+    }
   };
 
-  const logout = () => {
-    setAuthState({ user: null, loading: false });
-    localStorage.removeItem('auth_user');
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
