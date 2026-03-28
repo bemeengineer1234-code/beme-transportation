@@ -62,7 +62,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, activeVi
         }
 
         const usersSnapshot = await getDocs(collection(db, 'users'));
-        setUsers(usersSnapshot.docs.map(doc => doc.data() as User));
+        setUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
 
         const masterDoc = await getDoc(doc(db, 'settings', 'master'));
         if (masterDoc.exists()) {
@@ -174,10 +174,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, activeVi
       }
       
       const usersSnapshot = await getDocs(collection(db, 'users'));
-      setUsers(usersSnapshot.docs.map(doc => doc.data() as User));
+      setUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
       setIsUserModalOpen(false);
-    } catch (error) {
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (error: any) {
       console.error('Failed to save user:', error);
+      alert(`ユーザーの保存に失敗しました。\nエラー: ${error.message || '不明なエラー'}`);
     } finally {
       setIsSaving(false);
     }
@@ -605,9 +608,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate, activeVi
               </button>
               <button 
                 onClick={handleSaveUser}
-                className="btn-primary px-8 py-3"
+                disabled={isSaving}
+                className="btn-primary px-8 py-3 flex items-center gap-2"
               >
-                保存
+                {isSaving && <Loader2 size={18} className="animate-spin" />}
+                <span>保存</span>
               </button>
             </div>
           </div>
