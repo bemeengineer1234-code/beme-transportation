@@ -72,6 +72,31 @@ export const expenseService = {
     }
   },
 
+  // Slack に通知を送信
+  async notifySlack(application: Omit<ExpenseApplication, 'id' | 'createdAt'>): Promise<void> {
+    const webhookUrl = import.meta.env.VITE_SLACK_WEBHOOK_URL;
+    if (!webhookUrl) {
+      console.warn('Service: Slack Webhook URL not found in .env');
+      return;
+    }
+
+    const message = {
+      text: `🚀 *新規交通費申請がありました*\n\n*申請者:* ${application.userName}\n*日付:* ${application.date}\n*場所:* ${application.location}\n*金額:* ¥${application.amount.toLocaleString()}\n*備考:* ${application.remarks || 'なし'}\n\nログインして確認してください。`,
+    };
+
+    try {
+      // no-cors を使うと本文が送れない場合があるため、通常の fetch を試みる
+      await fetch(webhookUrl, {
+        method: 'POST',
+        body: JSON.stringify(message),
+        mode: 'no-cors', // Slack Webhook は CORS を許可していないため no-cors が必要
+      });
+      console.log('Service: Slack notification sent (no-cors)');
+    } catch (error) {
+      console.error('Service: Failed to send Slack notification', error);
+    }
+  },
+
   // 申請データを作成
   async createApplication(data: Omit<ExpenseApplication, 'id' | 'createdAt'>): Promise<string> {
     console.log('Service: Creating application in Firestore...', data);
@@ -81,6 +106,10 @@ export const expenseService = {
         createdAt: serverTimestamp(),
       });
       console.log('Service: Application created with ID:', docRef.id);
+      
+      // Slack 通知をバックグラウンドで実行（申請完了を待たせない）
+      this.notifySlack(data).catch(console.error);
+      
       return docRef.id;
     } catch (error) {
       console.error('Service: Error in createApplication:', error);
