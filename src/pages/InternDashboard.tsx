@@ -20,6 +20,7 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
   const [editingAppId, setEditingAppId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [submitting, setSubmitting] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().substring(0, 7));
   const [statusFilter, setStatusFilter] = useState<string>('all');
   
@@ -690,7 +691,11 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
                   <p className="label-micro">証憑画像</p>
                   <div className="grid grid-cols-3 gap-4">
                     {selectedApp.imageUrls.map((url, idx) => (
-                      <div key={idx} className="aspect-square rounded-[24px] overflow-hidden border border-line shadow-sm hover:shadow-xl transition-all hover:scale-[1.02]">
+                      <div 
+                        key={idx} 
+                        onClick={() => setPreviewImage(url)}
+                        className="aspect-square rounded-[24px] overflow-hidden border border-line shadow-sm hover:shadow-xl transition-all hover:scale-[1.02] cursor-pointer"
+                      >
                         <img src={url} alt="Receipt" className="w-full h-full object-cover" />
                       </div>
                     ))}
@@ -723,6 +728,29 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
         )}
 
       </div>
+
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 bg-ink/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 sm:p-10 cursor-pointer animate-in fade-in duration-300"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all z-[110]"
+            onClick={() => setPreviewImage(null)}
+          >
+            <X size={32} />
+          </button>
+          <div className="relative w-full h-full flex items-center justify-center">
+            <img 
+              src={previewImage} 
+              alt="Receipt Preview" 
+              className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in duration-300"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };

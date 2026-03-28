@@ -26,6 +26,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, acti
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [pendingAction, setPendingAction] = useState<{ type: 'cancel' | 'return', id: string } | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
     // Data is handled by ApplicationContext
@@ -349,12 +350,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, acti
                     <p className="label-micro">証憑画像</p>
                     <div className="grid grid-cols-2 gap-4">
                       {selectedApp.imageUrls.map((url, idx) => (
-                        <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="aspect-[3/4] rounded-3xl overflow-hidden border border-line hover:shadow-xl hover:scale-[1.02] transition-all group relative">
+                        <div 
+                          key={idx} 
+                          onClick={() => setPreviewImage(url)}
+                          className="aspect-[3/4] rounded-3xl overflow-hidden border border-line hover:shadow-xl hover:scale-[1.02] transition-all group relative cursor-pointer"
+                        >
                           <img src={url} alt="Receipt" className="w-full h-full object-cover" />
                           <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
                             <Eye className="text-white" size={24} />
                           </div>
-                        </a>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -510,6 +515,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, acti
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Image Preview Modal */}
+        {previewImage && (
+          <div 
+            className="fixed inset-0 bg-ink/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 sm:p-10 cursor-pointer animate-in fade-in duration-300"
+            onClick={() => setPreviewImage(null)}
+          >
+            <button 
+              className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all z-[110]"
+              onClick={() => setPreviewImage(null)}
+            >
+              <X size={32} />
+            </button>
+            <div className="relative w-full h-full flex items-center justify-center">
+              <img 
+                src={previewImage} 
+                alt="Receipt Preview" 
+                className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in duration-300"
+                onClick={(e) => e.stopPropagation()}
+              />
             </div>
           </div>
         )}
