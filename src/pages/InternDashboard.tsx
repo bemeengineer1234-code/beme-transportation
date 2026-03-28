@@ -217,7 +217,7 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
   };
 
   return (
-    <Layout title="マイ申請" onNavigate={onNavigate} activeView={activeView}>
+    <Layout title="My申請" onNavigate={onNavigate} activeView={activeView}>
       <div className="space-y-8">
         {/* Summary Section */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">

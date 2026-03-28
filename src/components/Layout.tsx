@@ -22,7 +22,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, title, activeView = 'd
           </div>
           <div>
             <h1 className="font-black text-ink text-lg tracking-tighter leading-none">
-              インターンフロー
+              インターン交通費申請
             </h1>
             <span className="text-slate-400 text-[10px] uppercase tracking-widest font-black">勤怠管理システム</span>
           </div>
