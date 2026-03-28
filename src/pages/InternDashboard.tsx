@@ -149,38 +149,48 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
       setSubmitting(true);
       console.log('Starting submission...', { date, location, amount, imagesCount: images.length });
       
-      // 画像のアップロード
-      let imageUrls = previews.filter(p => p.startsWith('http'));
-      const newImages = images;
-      
-      if (newImages.length > 0) {
-        console.log('Uploading new images...', newImages.length);
-        const uploadedUrls = await expenseService.uploadImages(user.id, newImages);
-        console.log('Upload success:', uploadedUrls);
-        imageUrls = [...imageUrls, ...uploadedUrls];
-      }
+      // 送信タイムアウトの設定 (例: 30秒)
+      const submissionPromise = (async () => {
+        // 画像のアップロード
+        let imageUrls = previews.filter(p => p.startsWith('http') || p.startsWith('data:image/'));
+        const newImages = images;
+        
+        if (newImages.length > 0) {
+          console.log('Uploading new images...', newImages.length);
+          const uploadedUrls = await expenseService.uploadImages(user.id, newImages);
+          console.log('Upload success:', uploadedUrls);
+          imageUrls = [...imageUrls, ...uploadedUrls];
+        }
 
-      const applicationData = {
-        userId: user.id,
-        userName: user.name,
-        date,
-        location,
-        departureStation,
-        arrivalStation,
-        route: `${departureStation} 〜 ${arrivalStation}`,
-        amount: Number(amount),
-        remarks,
-        imageUrls,
-        status: 'pending' as const
-      };
+        const applicationData = {
+          userId: user.id,
+          userName: user.name,
+          date,
+          location,
+          departureStation,
+          arrivalStation,
+          route: `${departureStation} 〜 ${arrivalStation}`,
+          amount: Number(amount),
+          remarks,
+          imageUrls,
+          status: 'pending' as const
+        };
 
-      if (editingAppId) {
-        console.log('Updating existing application:', editingAppId);
-        await updateApplication(editingAppId, applicationData);
-      } else {
-        console.log('Creating new application...');
-        await addApplication(applicationData);
-      }
+        if (editingAppId) {
+          console.log('Updating existing application:', editingAppId);
+          await updateApplication(editingAppId, applicationData);
+        } else {
+          console.log('Creating new application...');
+          await addApplication(applicationData);
+        }
+      })();
+
+      // タイムアウト監視
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('送信がタイムアウトしました。ネットワーク接続や Firebase の設定（特にストレージ）を確認してください。')), 40000);
+      });
+
+      await Promise.race([submissionPromise, timeoutPromise]);
 
       console.log('Submission complete success!');
       setShowForm(false);
