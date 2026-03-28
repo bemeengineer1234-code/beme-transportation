@@ -34,8 +34,8 @@ export const LoginPage: React.FC = () => {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-brand-vibrant text-white rounded-[28px] shadow-2xl shadow-brand-vibrant/30 mb-8 rotate-3 hover:rotate-0 transition-transform duration-500">
             <Shield size={40} />
           </div>
-          <h1 className="text-4xl font-black text-ink tracking-tight mb-3">
-            インターン<span className="text-brand-vibrant">フロー</span>
+          <h1 className="text-3xl font-black text-ink tracking-tight mb-3">
+            インターン<span className="text-brand-vibrant">交通費申請</span>
           </h1>
           <p className="text-slate-400 font-bold tracking-widest uppercase text-[10px]">
             プロフェッショナルな勤怠管理システム
@@ -114,7 +114,7 @@ export const LoginPage: React.FC = () => {
         </div>
 
         <p className="text-center mt-12 text-[10px] font-black text-slate-300 tracking-widest uppercase">
-          &copy; 2024 InternFlow System. All Rights Reserved.
+          &copy; 2024 Transportation Expense System. All Rights Reserved.
         </p>
       </div>
     </div>
