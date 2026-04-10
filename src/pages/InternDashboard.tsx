@@ -468,9 +468,9 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
 
         {/* New Application Modal */}
         {showForm && (
-          <div className="fixed inset-0 bg-ink/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
-            <div className="bg-white w-full max-w-2xl rounded-[32px] sm:rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-line">
-              <div className="px-6 sm:px-10 py-6 sm:py-8 border-b border-line flex items-center justify-between bg-slate-50/30">
+          <div className="fixed inset-0 bg-ink/40 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-4">
+            <div className="bg-white w-full max-w-2xl rounded-[24px] sm:rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-line">
+              <div className="px-4 sm:px-10 py-5 sm:py-8 border-b border-line flex items-center justify-between bg-slate-50/30">
                 <div>
                   <div className="label-micro mb-1">Application Form</div>
                   <h3 className="text-xl sm:text-2xl font-black text-ink">
@@ -482,8 +482,8 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-6 sm:p-10 space-y-6 sm:space-y-8 max-h-[80vh] overflow-y-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <form onSubmit={handleSubmit} className="p-4 sm:p-10 space-y-6 sm:space-y-8 max-h-[80vh] overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
                   <div className="space-y-3">
                     <label className="label-micro ml-1 flex items-center gap-2">
                       <Calendar size={14} className="text-brand" /> 稼働日
@@ -492,7 +492,7 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
-                      className="w-full px-5 py-4 bg-slate-50 border border-line rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none font-black text-sm transition-all"
+                      className="w-full min-w-0 px-4 sm:px-5 py-3.5 sm:py-4 bg-slate-50 border border-line rounded-2xl sm:rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none font-black text-sm transition-all appearance-none"
                       required
                     />
                   </div>
@@ -507,7 +507,7 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
                       onChange={(e) => setLocation(e.target.value)}
                       placeholder="例: 幕張メッセ"
                       list="location-suggestions"
-                      className="w-full px-5 py-4 bg-slate-50 border border-line rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none font-black text-sm transition-all"
+                      className="w-full px-4 sm:px-5 py-3.5 sm:py-4 bg-slate-50 border border-line rounded-2xl sm:rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none font-black text-sm transition-all"
                       required
                     />
                     <datalist id="location-suggestions">
@@ -527,7 +527,7 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
                         value={departureStation}
                         onChange={(e) => setDepartureStation(e.target.value)}
                         placeholder="出発駅"
-                        className="flex-1 px-5 py-4 bg-slate-50 border border-line rounded-2xl sm:rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none font-black text-sm transition-all"
+                        className="flex-1 min-w-0 px-4 sm:px-5 py-3.5 sm:py-4 bg-slate-50 border border-line rounded-2xl sm:rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none font-black text-sm transition-all"
                         required
                       />
                       <span className="text-slate-300 font-black hidden sm:block">〜</span>
@@ -536,7 +536,7 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
                         value={arrivalStation}
                         onChange={(e) => setArrivalStation(e.target.value)}
                         placeholder="到着駅"
-                        className="flex-1 px-5 py-4 bg-slate-50 border border-line rounded-2xl sm:rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none font-black text-sm transition-all"
+                        className="flex-1 min-w-0 px-4 sm:px-5 py-3.5 sm:py-4 bg-slate-50 border border-line rounded-2xl sm:rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none font-black text-sm transition-all"
                         required
                       />
                     </div>
@@ -553,7 +553,7 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         placeholder="1,200"
-                        className="w-full pl-10 pr-5 py-4 bg-slate-50 border border-line rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none font-black text-sm transition-all"
+                        className="w-full pl-9 sm:pl-10 pr-4 sm:pr-5 py-3.5 sm:py-4 bg-slate-50 border border-line rounded-2xl sm:rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none font-black text-sm transition-all"
                         required
                       />
                     </div>
@@ -567,7 +567,7 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
                     onChange={(e) => setRemarks(e.target.value)}
                     rows={3}
                     placeholder="特記事項があれば入力してください"
-                    className="w-full px-5 py-4 bg-slate-50 border border-line rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none resize-none font-medium text-sm leading-relaxed transition-all"
+                    className="w-full px-4 sm:px-5 py-3.5 sm:py-4 bg-slate-50 border border-line rounded-2xl sm:rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none resize-none font-medium text-sm leading-relaxed transition-all"
                   />
                 </div>
 
