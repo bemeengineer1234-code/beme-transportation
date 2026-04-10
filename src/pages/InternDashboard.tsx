@@ -269,20 +269,20 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="bg-white border border-line rounded-2xl px-5 py-3 text-sm font-black text-ink focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none cursor-pointer transition-all appearance-none min-w-[140px]"
+                className="bg-white border border-line rounded-2xl px-4 sm:px-5 py-2.5 sm:py-3 text-sm font-black text-ink focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none cursor-pointer transition-all appearance-none min-w-[120px] sm:min-w-[140px]"
               >
                 {availableMonths.map(month => (
                   <option key={month} value={month}>{month.replace('-', '年')}月</option>
                 ))}
               </select>
             </div>
-            <div className="h-10 w-px bg-line self-end mb-1 hidden sm:block" />
+            <div className="h-10 w-px bg-line self-end mb-1 hidden lg:block" />
             <div>
               <div className="label-micro mb-1">ステータス</div>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-white border border-line rounded-2xl px-5 py-3 text-sm font-black text-ink focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none cursor-pointer transition-all appearance-none min-w-[140px]"
+                className="bg-white border border-line rounded-2xl px-4 sm:px-5 py-2.5 sm:py-3 text-sm font-black text-ink focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none cursor-pointer transition-all appearance-none min-w-[120px] sm:min-w-[140px]"
               >
                 <option value="all">すべて</option>
                 <option value="pending">申請中</option>
@@ -290,28 +290,28 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
                 <option value="returned">差し戻し</option>
               </select>
             </div>
-            <div className="h-10 w-px bg-line self-end mb-1 hidden sm:block" />
+            <div className="h-10 w-px bg-line self-end mb-1 hidden lg:block" />
             <div>
               <div className="label-micro mb-1">表示形式</div>
               <div className="flex bg-slate-100 p-1 rounded-2xl">
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`px-5 py-2 rounded-xl text-xs font-black transition-all ${viewMode === 'list' ? 'bg-white text-brand shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`px-4 sm:px-5 py-2 rounded-xl text-[10px] sm:text-xs font-black transition-all ${viewMode === 'list' ? 'bg-white text-brand shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                   リスト
                 </button>
                 <button
                   onClick={() => setViewMode('calendar')}
-                  className={`px-5 py-2 rounded-xl text-xs font-black transition-all ${viewMode === 'calendar' ? 'bg-white text-brand shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`px-4 sm:px-5 py-2 rounded-xl text-[10px] sm:text-xs font-black transition-all ${viewMode === 'calendar' ? 'bg-white text-brand shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                   カレンダー
                 </button>
               </div>
             </div>
-            <div className="h-10 w-px bg-line self-end mb-1 hidden sm:block" />
+            <div className="h-10 w-px bg-line self-end mb-1 hidden lg:block" />
             <div>
               <div className="label-micro mb-1">履歴</div>
-              <h3 className="text-2xl font-black text-ink tracking-tighter">申請履歴</h3>
+              <h3 className="text-xl sm:text-2xl font-black text-ink tracking-tighter">申請履歴</h3>
             </div>
           </div>
           <button
@@ -413,43 +413,43 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
               finalFilteredApps.map((app) => (
               <div 
                 key={app.id} 
-                className="card p-8 hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-300 group cursor-pointer active:scale-[0.99]"
+                className="card p-5 sm:p-8 hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-300 group cursor-pointer active:scale-[0.99]"
                 onClick={() => handleView(app)}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8">
-                  <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 bg-slate-50 rounded-[24px] flex flex-col items-center justify-center border border-line group-hover:bg-brand/5 group-hover:border-brand/20 transition-all group-hover:scale-105">
-                      <span className="text-[11px] font-black text-slate-400 uppercase leading-none mb-1">{app.date.split('-')[1]}月</span>
-                      <span className="text-2xl font-black text-ink leading-none tracking-tighter">{app.date.split('-')[2]}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 sm:gap-8">
+                  <div className="flex items-center gap-4 sm:gap-6">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-slate-50 rounded-[20px] sm:rounded-[24px] flex flex-col items-center justify-center border border-line group-hover:bg-brand/5 group-hover:border-brand/20 transition-all group-hover:scale-105 shrink-0">
+                      <span className="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase leading-none mb-1">{app.date.split('-')[1]}月</span>
+                      <span className="text-xl sm:text-2xl font-black text-ink leading-none tracking-tighter">{app.date.split('-')[2]}</span>
                     </div>
                     <div>
-                      <div className="flex items-center gap-4 mb-2">
+                      <div className="flex items-center gap-3 sm:gap-4 mb-1.5 sm:mb-2 text-[10px] sm:text-xs">
                         <span className="data-value text-slate-400">{app.date.replace(/-/g, '.')}</span>
                         <StatusBadge status={app.status} />
                       </div>
-                      <div className="flex flex-wrap items-center gap-x-8 gap-y-2">
-                        <span className="flex items-center gap-2 text-base font-black text-ink">
-                          <MapPin size={16} className="text-brand" /> {app.location}
+                      <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-8 gap-y-1.5 sm:gap-y-2">
+                        <span className="flex items-center gap-1.5 text-sm sm:text-base font-black text-ink">
+                          <MapPin size={14} className="text-brand" /> {app.location}
                         </span>
-                        <span className="text-xl font-black text-brand tracking-tighter">
-                          <span className="text-xs mr-1 opacity-50">¥</span>
+                        <span className="text-lg sm:text-xl font-black text-brand tracking-tighter">
+                          <span className="text-[10px] sm:text-xs mr-1 opacity-50">¥</span>
                           {app.amount.toLocaleString()}
                         </span>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-5 self-end sm:self-auto">
+                  <div className="flex items-center gap-4 self-end sm:self-auto">
                     {app.status === 'returned' && (
                       <button 
                         onClick={(e) => { e.stopPropagation(); handleEdit(app); }}
-                        className="px-6 py-2 bg-rose-600 text-white text-xs font-black rounded-2xl shadow-lg shadow-rose-100 hover:bg-rose-700 transition-all active:scale-95"
+                        className="px-4 sm:px-6 py-2 bg-rose-600 text-white text-[10px] sm:text-xs font-black rounded-2xl shadow-lg shadow-rose-100 hover:bg-rose-700 transition-all active:scale-95"
                       >
                         修正する
                       </button>
                     )}
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-slate-300 group-hover:text-brand group-hover:bg-brand/5 transition-all">
-                      <ChevronRight size={24} />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-slate-300 group-hover:text-brand group-hover:bg-brand/5 transition-all">
+                      <ChevronRight size={20} sm={24} />
                     </div>
                   </div>
                 </div>
@@ -469,20 +469,20 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
         {/* New Application Modal */}
         {showForm && (
           <div className="fixed inset-0 bg-ink/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
-            <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-line">
-              <div className="px-10 py-8 border-b border-line flex items-center justify-between bg-slate-50/30">
+            <div className="bg-white w-full max-w-2xl rounded-[32px] sm:rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-line">
+              <div className="px-6 sm:px-10 py-6 sm:py-8 border-b border-line flex items-center justify-between bg-slate-50/30">
                 <div>
                   <div className="label-micro mb-1">Application Form</div>
-                  <h3 className="text-2xl font-black text-ink">
+                  <h3 className="text-xl sm:text-2xl font-black text-ink">
                     {editingAppId ? '申請内容の修正' : '新規交通費申請'}
                   </h3>
                 </div>
-                <button onClick={() => setShowForm(false)} className="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-ink rounded-2xl hover:bg-slate-100 transition-all">
-                  <X size={28} />
+                <button onClick={() => setShowForm(false)} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-slate-400 hover:text-ink rounded-xl sm:rounded-2xl hover:bg-slate-100 transition-all">
+                  <X size={24} sm={28} />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-10 space-y-8 max-h-[80vh] overflow-y-auto">
+              <form onSubmit={handleSubmit} className="p-6 sm:p-10 space-y-6 sm:space-y-8 max-h-[80vh] overflow-y-auto">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-3">
                     <label className="label-micro ml-1 flex items-center gap-2">
@@ -625,18 +625,18 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
         {/* Detail Modal */}
         {selectedApp && (
           <div className="fixed inset-0 bg-ink/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
-            <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-line">
-              <div className="px-10 py-8 border-b border-line flex items-center justify-between bg-slate-50/30">
+            <div className="bg-white w-full max-w-2xl rounded-[32px] sm:rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-line">
+              <div className="px-6 sm:px-10 py-6 sm:py-8 border-b border-line flex items-center justify-between bg-slate-50/30">
                 <div>
                   <div className="label-micro mb-1">Application Detail</div>
-                  <h3 className="text-2xl font-black text-ink">申請詳細</h3>
+                  <h3 className="text-xl sm:text-2xl font-black text-ink">申請詳細</h3>
                 </div>
-                <button onClick={() => setSelectedApp(null)} className="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-ink rounded-2xl hover:bg-slate-100 transition-all">
-                  <X size={28} />
+                <button onClick={() => setSelectedApp(null)} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-slate-400 hover:text-ink rounded-xl sm:rounded-2xl hover:bg-slate-100 transition-all">
+                  <X size={24} sm={28} />
                 </button>
               </div>
 
-              <div className="p-10 space-y-10 max-h-[80vh] overflow-y-auto">
+              <div className="p-6 sm:p-10 space-y-8 sm:space-y-10 max-h-[80vh] overflow-y-auto">
                 <div className="grid grid-cols-2 gap-8">
                   <div className="space-y-2">
                     <p className="label-micro">稼働日</p>
