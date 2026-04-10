@@ -57,8 +57,12 @@ export const ApplicationProvider: React.FC<{ children: ReactNode }> = ({ childre
     await expenseService.updateStatus(id, status, reason);
   };
 
+  const deleteApplication = async (id: string) => {
+    await expenseService.deleteApplication(id);
+  };
+
   return (
-    <ApplicationContext.Provider value={{ applications, loading, addApplication, updateApplication, updateStatus }}>
+    <ApplicationContext.Provider value={{ applications, loading, addApplication, updateApplication, updateStatus, deleteApplication }}>
       {children}
     </ApplicationContext.Provider>
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
-import { Filter, Download, Search, CheckCircle, RotateCcw, X, Eye, User as UserIcon, Calendar, MapPin, FileText, AlertCircle, CreditCard, Lock } from 'lucide-react';
+import { Filter, Download, Search, CheckCircle, RotateCcw, X, Eye, User as UserIcon, Calendar, MapPin, FileText, AlertCircle, CreditCard, Lock, Trash2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useApplications } from '../contexts/ApplicationContext';
 import { ExpenseApplication } from '../types';
@@ -13,7 +13,7 @@ interface AdminDashboardProps {
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, activeView }) => {
   const { user } = useAuth();
-  const { applications, updateStatus, loading } = useApplications();
+  const { applications, updateStatus, deleteApplication, loading } = useApplications();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -85,6 +85,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, acti
       setReturnReason('');
     } catch (error) {
       console.error('Return failed:', error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('この申請を完全に消去しますか？この操作は取り消せません。')) return;
+
+    try {
+      await deleteApplication(id);
+      setSelectedApp(null);
+    } catch (error) {
+      console.error('Delete failed:', error);
+      alert('削除に失敗しました。');
     }
   };
 
@@ -390,9 +402,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, acti
                           className="btn-secondary flex-1 flex items-center justify-center gap-2 py-4"
                         >
                           <X size={20} />
-                          <span>承認を取り消す</span>
-                        </button>
+                          </button>
                       )}
+                    </div>
+                    
+                    {/* 消去ボタン */}
+                    <div className="mt-4 flex">
+                      <button
+                        onClick={() => handleDelete(selectedApp.id)}
+                        className="flex-1 flex items-center justify-center gap-2 py-3 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition-all border border-transparent hover:border-rose-100 text-sm font-bold"
+                      >
+                        <Trash2 size={16} />
+                        <span>申請データを完全に消去する</span>
+                      </button>
                     </div>
                   </div>
                 )}

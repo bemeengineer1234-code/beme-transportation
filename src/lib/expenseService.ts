@@ -7,6 +7,7 @@ import {
   orderBy, 
   updateDoc, 
   doc, 
+  deleteDoc,
   Timestamp,
   serverTimestamp
 } from 'firebase/firestore';
@@ -180,6 +181,19 @@ export const expenseService = {
       console.log('Service: Status updated successfully');
     } catch (error) {
       console.error('Service: Error in updateStatus:', error);
+      throw error;
+    }
+  },
+
+  // 申請データを削除
+  async deleteApplication(id: string): Promise<void> {
+    console.log('Service: Deleting application...', { id });
+    try {
+      const docRef = doc(db, 'applications', id);
+      await deleteDoc(docRef);
+      console.log('Service: Application deleted successfully');
+    } catch (error) {
+      console.error('Service: Error in deleteApplication:', error);
       throw error;
     }
   }
