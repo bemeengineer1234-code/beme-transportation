@@ -521,22 +521,22 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
                     <label className="label-micro ml-1 flex items-center gap-2">
                       <Navigation size={14} className="text-brand" /> 移動区間
                     </label>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                       <input
                         type="text"
                         value={departureStation}
                         onChange={(e) => setDepartureStation(e.target.value)}
                         placeholder="出発駅"
-                        className="flex-1 px-5 py-4 bg-slate-50 border border-line rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none font-black text-sm transition-all"
+                        className="flex-1 px-5 py-4 bg-slate-50 border border-line rounded-2xl sm:rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none font-black text-sm transition-all"
                         required
                       />
-                      <span className="text-slate-300 font-black">〜</span>
+                      <span className="text-slate-300 font-black hidden sm:block">〜</span>
                       <input
                         type="text"
                         value={arrivalStation}
                         onChange={(e) => setArrivalStation(e.target.value)}
                         placeholder="到着駅"
-                        className="flex-1 px-5 py-4 bg-slate-50 border border-line rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none font-black text-sm transition-all"
+                        className="flex-1 px-5 py-4 bg-slate-50 border border-line rounded-2xl sm:rounded-3xl focus:ring-4 focus:ring-brand/5 focus:border-brand outline-none font-black text-sm transition-all"
                         required
                       />
                     </div>
@@ -666,8 +666,9 @@ export const InternDashboard: React.FC<InternDashboardProps> = ({ onNavigate, ac
 
                 <div className="space-y-2">
                   <p className="label-micro">移動区間</p>
-                  <p className="text-ink font-black flex items-center gap-2">
-                    <Navigation size={18} className="text-brand" /> {selectedApp.route}
+                  <p className="text-ink font-black flex items-start gap-2 break-all">
+                    <Navigation size={18} className="text-brand shrink-0 mt-1" /> 
+                    <span>{selectedApp.route}</span>
                   </p>
                 </div>
 
